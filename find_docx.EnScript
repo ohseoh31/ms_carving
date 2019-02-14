@@ -1,0 +1,113 @@
+
+
+class MainClass {
+  typedef byte[] ByteArray;
+
+  void find_extension(){
+
+      //50 4B 03 04 14 00 06
+  }
+
+  void Main(CaseClass c) {
+    SystemClass::ClearConsole(1);
+
+    SystemClass::ClearConsole(SystemClass::SHOWCONSOLE);
+    EntryFileClass entryFile();
+
+    String FolderPath = "C:\\";
+
+    for(ItemIteratorClass iter(c, 0, ItemIteratorClass::CURRENTVIEW_SELECTED); EntryClass entry = iter.GetNextEntry();){
+        //Console.WriteLine(entry.Name());
+
+        if (entry.Name() == "un_used"){
+            Console.WriteLine(entry.Name());
+            entryFile.Open(entry);
+            entryFile.SetCodePage(CodePageClass::ANSI);
+
+            Console.WriteLine(entry.LogicalSize());
+            ByteArray ba(entry.LogicalSize());
+            entryFile.ReadBinary(ba);
+
+            int start = 0;
+            int end = 0;
+            int flag = 0;
+            int i;
+            for (i=0 ; i<entry.LogicalSize(); i++){
+
+                if (ba[i] == 0x50 && ba[i+1] == 0x4B && ba[i+2] == 0x03
+                  && ba[i+3] == 0x04 && ba[i+4] == 0x14 && ba[i+5] == 0x00
+                  && ba[i+6] == 0x06 && ba[i+7] == 0x00) {
+                    Console.WriteLine("MS File Find~~ :start : [" + i +"]");
+                    start = i;
+                    int j = i;
+                    for (int j = i+8 ; j<entry.LogicalSize(); j++){
+                      //50 4B 05 06
+
+                      if (ba[j] == 0x50 && ba[j+1] == 0x4B && ba[j+2] == 0x03
+                        && ba[j+3] == 0x04 && ba[j+4] == 0x14 && ba[j+5] == 0x00
+                        && ba[j+6] == 0x06 && ba[j+7] == 0x00 ){
+
+                          // ppt/slides/_rels 70 70 74 2F 73 6C 69 64 65 73 2F 5F 72 65 6C 73
+
+                          if (ba[j+30] == 0x70 && ba[j+31] == 0x70 && ba[j+32] == 0x74
+                            && ba[j+33] == 0x2F && ba[j+34] == 0x73 && ba[j+35] == 0x6C
+                            && ba[j+36] == 0x69 && ba[j+37] == 0x64 && ba[j+38] == 0x65
+                            && ba[j+39] == 0x73 && ba[j+40] == 0x2F && ba[j+41] == 0x5F
+                            && ba[j+42] == 0x72 && ba[j+43] == 0x65 && ba[j+44] == 0x6C
+                            && ba[j+45] == 0x73){
+                            flag = 1;
+                            Console.WriteLine("pptx file");
+                          }
+                          // /xl/_rels xlsx 78 6C 2F 5F 72 65 6C 73
+                          if(ba[j+30] == 0x78 && ba[j+31] == 0x6C && ba[j+32] == 0x2F
+                            && ba[j+33] == 0x5F && ba[j+34] == 0x72 && ba[j+35] == 0x65
+                            && ba[j+36] == 0x6C && ba[j+37] == 0x73){
+                            flag = 2;
+                            Console.WriteLine("xlsx file");
+                          }
+                          // word/_rels 77 6F 72 64 2F 5F 72 65 6C 73
+                          else if(ba[j+30] == 0x77 && ba[j+31] == 0x6F && ba[j+32] == 0x72
+                            && ba[j+33] == 0x64 && ba[j+34] == 0x2F && ba[j+35] == 0x5F
+                            && ba[j+36] == 0x72 && ba[j+37] == 0x65 && ba[j+38] == 0x6C
+                            && ba[j+39] == 0x73){
+                            flag = 3;
+                            Console.WriteLine("word file" + j);
+                          }
+
+                      }
+
+                      if (ba[j] == 0x50 && ba[j+1] == 0x4B && ba[j+2] == 0x05 && ba[j+3] == 0x06){
+                          //Console.WriteLine("cccc");
+                          end = j;
+                          i = j + 21;
+                          break;
+                      }
+                    }
+
+                    LocalFileClass File();
+                    String ext ="";
+                    if (flag == 1){
+                      ext = ".pptx";
+                    }
+                    else if (flag ==2){
+                      ext = ".xlsx";
+                    }
+                    else if (flag ==3){
+                      ext = ".docx";
+                    }
+
+                    File.Open(FolderPath + start + "_" + end + ext , FileClass::WRITE);
+
+                    for (int num = start ; num< end + 22 ; num ++ ){
+                      File.WriteBinary(ba[num]);
+                    }
+                    File.Close();
+                    flag = 0;
+                }
+            }
+        }
+    }
+    Console.WriteLine("file end");
+  }
+
+}
